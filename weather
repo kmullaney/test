@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="600"> <!-- Refresh the page every 10 minutes -->
+    <title>Weather Forecast Table</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<h2>10-Day Weather Forecast</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Louisville, KY</th>
+            <th>Hillsdale, MI</th>
+            <th>Cedarville, OH</th>
+            <th>Grove City, PA</th>
+        </tr>
+    </thead>
+    <tbody id="forecastTable">
+        <!-- Rows will be dynamically generated here -->
+    </tbody>
+</table>
+
+<script>
+    const cities = {
+        'Louisville': 'Louisville, Kentucky',
+        'Hillsdale': 'Hillsdale, Michigan',
+        'Cedarville': 'Cedarville, Ohio',
+        'Grove City': 'Grove City, Pennsylvania'
+    };
+
+    const apiKey = '9cd7c4ce10f94badbd714014242509'; // Replace with your WeatherAPI key
+    const forecastTable = document.getElementById('forecastTable');
+
+    async function fetchWeather(city) {
+        const response = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${city}&days=10`);
+        const data = await response.json();
+        return data.forecast.forecastday.map(entry => ({
+            date: entry.date,
+            temp: `${Math.round(entry.day.avgtemp_f)}°F`,
+            desc: entry.day.condition.text
+        }));
+    }
+
+    async function updateForecast() {
+        forecastTable.innerHTML = '';
+        const rows = [];
+
+        for (let i = 0; i < 10; i++) {
+            const row = document.createElement('tr');
+            const dateCell = document.createElement('td');
+            dateCell.textContent = new Date(Date.now() + i * 24 * 60 * 60 * 1000).toLocaleDateString();
+            row.appendChild(dateCell);
+
+            for (const city of Object.values(cities)) {
+                const cell = document.createElement('td');
+                try {
+                    const weatherData = await fetchWeather(city);
+                    cell.textContent = `${weatherData[i].temp}, ${weatherData[i].desc}`;
+                } catch (error) {
+                    cell.textContent = 'Error fetching data';
+                    console.error('Error fetching weather data:', error);
+                }
+                row.appendChild(cell);
+            }
+            rows.push(row);
+        }
+        rows.forEach(row => forecastTable.appendChild(row));
+    }
+
+    updateForecast();
+    setInterval(updateForecast, 900000); // Update every 15 minutes
+</script>
+
+</body>
+</html>
